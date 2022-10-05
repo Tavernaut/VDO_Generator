@@ -14,6 +14,7 @@ param(
 
     [Parameter(ParameterSetName="FromCommandline", Mandatory)][string]$RoomName,
     [Parameter(ParameterSetName="FromCommandline", Mandatory)][array]$GuestList,
+    [Parameter(ParameterSetName="FromCommandline", Mandatory)][array]$VDOConfigs,
 
     [Parameter(ParameterSetName="FromJSON", Mandatory)][array]$JSONFile
 )
@@ -26,11 +27,17 @@ if($JSONFile){
     $Settings = Read-VDOConfig "$PSScriptRoot\$JSONFile" -CreateFromExample "$PSScriptRoot\EXAMPLE_INPUT.json"
 }
 else{
-    [PSCustomObject]$Settings = @{
-        RoomName    = $RoomName
-        Guests      = $GuestList
+    $Settings = [PSCustomObject]@{
+        RoomName    = '$RoomName'
+        Guests      = '$GuestList'
+        Config      = [PSCustomObject]@{
+            _default    = [PSCustomObject]@{
+                ConfigList  = $VDOConfigs
+            }
+        }
     }
 }
+
 
 $Secret = New-VDOSecret ($Config.RoomNameLength - [int]$Settings.RoomName.Length - 1)
 $Password = New-VDOSecret $Config.PasswordLength
