@@ -36,15 +36,19 @@ function New-VDOUri {
         [Parameter(Mandatory)][string]$Room,
         [Parameter(Mandatory)][string]$Guest,
         [Parameter(Mandatory)][string]$Secret,
+        [Parameter()][string]$Pronouns,
         [Parameter()][array]$VDOConfig,
         [Parameter()][string]$Password
-    ) 
-    $VDOUri = "{0}push={1}&room={2}_{3}&Password={4}&{5}" -f    ($BaseUri -replace '[^\w\?/:\. ]'), 
-                                                                ($Guest -replace '[^\w]'), 
-                                                                ($Room -replace '[^\w]'),
-                                                                $Secret,
-                                                                $Password,
-                                                                ($VDOConfig -join "&" -replace '[^\w_%\s&=]') 
+    )
+    if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns}else{$Label = $Guest}
+    $VDOUri = "{0}push={1}&label={2}&room={3}_{4}&Password={5}&{6}" -f  `
+                ($BaseUri -replace '[^\w\?/:\. ]'), 
+                ($Guest -replace '[^\w]'), 
+                ($Label -replace '[^\w\s()%]'), 
+                ($Room -replace '[^\w]'),
+                $Secret,
+                $Password,
+                ($VDOConfig -join "&" -replace '[^\w_%\s&=]') 
     
     return $VDOUri -replace '[\s]','%20'
                                                             

@@ -28,8 +28,8 @@ if($JSONFile){
 }
 else{
     $Settings = [PSCustomObject]@{
-        RoomName    = '$RoomName'
-        Guests      = '$GuestList'
+        RoomName    = $RoomName
+        Guests      = $GuestList
         Config      = [PSCustomObject]@{
             _default    = [PSCustomObject]@{
                 ConfigList  = $VDOConfigs
@@ -45,10 +45,10 @@ $Password = New-VDOSecret $Config.PasswordLength
 
 foreach($Guest in $Settings.Guests){
     if($Settings.Config.PSObject.Properties.Name -Contains $Guest){
-        $VDOConfig =  $Settings.Config.PSObject.Properties["$Guest"].Value.ConfigList
+        $GuestConfig =  $Settings.Config.PSObject.Properties["$Guest"]
     }
     else{
-        $VDOConfig = $Settings.Config.PSObject.Properties["_default"].Value.ConfigList
+        $GuestConfig = $Settings.Config.PSObject.Properties["_default"]
     }
-    New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -VDOConfig $VDOConfig -Password $Password 
+    New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -VDOConfig $GuestConfig.Value.ConfigList -Password $Password -Pronouns $GuestConfig.Value.Pronouns
 }
