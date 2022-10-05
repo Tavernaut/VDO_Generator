@@ -40,7 +40,7 @@ function New-VDOUri {
         [Parameter()][array]$VDOConfig,
         [Parameter()][string]$Password
     )
-    if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns}else{$Label = $Guest}
+    if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns -replace "/","%2f"}else{$Label = $Guest}
     $VDOUri = "{0}push={1}&label={2}&room={3}_{4}&Password={5}&{6}" -f  `
                 ($BaseUri -replace '[^\w\?/:\. ]'), 
                 ($Guest -replace '[^\w]'), 
@@ -48,7 +48,7 @@ function New-VDOUri {
                 ($Room -replace '[^\w]'),
                 $Secret,
                 $Password,
-                ($VDOConfig -join "&" -replace '[^\w_%\s&=]') 
+                ($VDOConfig -join "&" -replace '[^\w_%\s&=()]') 
     
     return $VDOUri -replace '[\s]','%20'
                                                             
@@ -59,5 +59,29 @@ function New-VDOSecret {
         [Parameter(Mandatory, Position = 0)][int]$Length
     )
     -join ((0..9) + (65 .. 90) + (97 ..122 ) | Get-Random -Count $Length | %{if($_ -lt 10){$_}else{[char]$_}})
+}
+
+function Format-VDOConfig {
+    param(
+        [Parameter(Mandatory)][psobject]$DefaultParameters,
+        [Parameter()][psobject]$OverrideParameters
+    )
+
+    $Parameters = $DefaultParameters.PSObject.Copy()
+
+    if($OverrideParameters){
+        foreach($Param in $OverrideParameters.PSObject.Properties){
+            $Parameters | Add-Member -MemberType NoteProperty -Name $Param.Name -Value $Param.Value -Force
+        }
+    }
+
+    $output = @()
+    
+    foreach($Param in $Parameters.PSObject.Properties){
+        if($Param.Value){$output += $Param.Name, $Param.Value -join "="}
+        else {$output += $Param.Name}
+    }
+
+    return $output
 }
 
