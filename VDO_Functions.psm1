@@ -38,17 +38,28 @@ function New-VDOUri {
         [Parameter(Mandatory)][string]$Secret,
         [Parameter()][string]$Pronouns,
         [Parameter()][array]$VDOConfig,
-        [Parameter()][string]$Password
+        [Parameter()][string]$Password,
+        [Parameter()][switch]$Director
     )
-    if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns -replace "/","%2f"}else{$Label = $Guest}
-    $VDOUri = "{0}push={1}&label={2}&room={3}_{4}&Password={5}&{6}" -f  `
-                ($BaseUri -replace '[^\w\?/:\. ]'), 
-                ($Guest -replace '[^\w]'), 
-                ($Label -replace '[^\w\s()%]'), 
-                ($Room -replace '[^\w]'),
-                $Secret,
-                $Password,
-                ($VDOConfig -join "&" -replace '[^\w_%\s&=()]') 
+    if($Director){
+        if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns -replace "/","%2f"}else{$Label = $Guest}
+        $VDOUri = "{0}push={1}&label={2}&room={3}_{4}&Password={5}&{6}" -f  `
+                    ($BaseUri -replace '[^\w\?/:\. ]'), 
+                    ($Guest -replace '[^\w]'), 
+                    ($Label -replace '[^\w\s()%]'), 
+                    ($Room -replace '[^\w]'),
+                    $Secret,
+                    $Password,
+                    ($VDOConfig -join "&" -replace '[^\w_%\s&=()]') 
+    }
+    else{
+        $VDOUri = "{0}director={1}_{2}&Password={3}" -f `
+                    ($BaseUri -replace '[^\w\?/:\. ]'), 
+                    ($Room -replace '[^\w]'),
+                    $Secret,
+                    $Password
+    }
+    
     
     return $VDOUri -replace '[\s]','%20'
                                                             
@@ -84,4 +95,3 @@ function Format-VDOConfig {
 
     return $output
 }
-
