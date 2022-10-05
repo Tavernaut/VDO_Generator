@@ -44,6 +44,11 @@ $Password = New-VDOSecret $Config.PasswordLength
 
 $DefaultConfig = $Settings.Config.PSObject.Properties["_default"]
 
+$URIs = [PSObject]@{
+    DirectorUri = New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Secret $Secret -Password $Password -Director
+    Guests      = [PSObject]@{}
+}
+
 foreach($Guest in $Settings.Guests){
     $VDOConfigs = $DefaultConfig
     if($Settings.Config.PSObject.Properties.Name -Contains $Guest){        
@@ -55,5 +60,12 @@ foreach($Guest in $Settings.Guests){
         $VDOConfig = Format-VDOConfig -DefaultParameters $DefaultConfig.Value.ConfigList
     }
     
-    New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -VDOConfig $VDOConfig -Password $Password -Pronouns $GuestConfig.Value.Pronouns
+    $URIs.Guests += [PSObject]@{
+        $Guest = [PSObject]@{
+            Link    = New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -VDOConfig $VDOConfig -Password $Password -Pronouns $GuestConfig.Value.Pronouns
+            Scene   = New-VDOUri -Scene -BaseUri $config.BaseUri -Room $Settings.RoomName -View $Guest -Secret $Secret -Password $Password    
+        }
+    }    
 }
+
+$URIs | ConvertTo-Json

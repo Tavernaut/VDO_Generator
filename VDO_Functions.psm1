@@ -34,14 +34,35 @@ function New-VDOUri {
     param(
         [Parameter(Mandatory)][string]$BaseUri,
         [Parameter(Mandatory)][string]$Room,
-        [Parameter(Mandatory)][string]$Guest,
         [Parameter(Mandatory)][string]$Secret,
-        [Parameter()][string]$Pronouns,
-        [Parameter()][array]$VDOConfig,
         [Parameter()][string]$Password,
-        [Parameter()][switch]$Director
+
+        [Parameter(Mandatory, ParameterSetName="GuestUri")][string]$Guest,
+        [Parameter(ParameterSetName="GuestUri")][string]$Pronouns,
+        [Parameter(ParameterSetName="GuestUri")][array]$VDOConfig,
+        
+        [Parameter(ParameterSetName="DirectorUri")][switch]$Director,
+
+        [Parameter(Mandatory, ParameterSetName="SceneUri")][string]$View,
+        [Parameter(ParameterSetName="SceneUri")][switch]$Scene
+        
     )
     if($Director){
+        $VDOUri = "{0}director={1}_{2}&Password={3}" -f `
+                    ($BaseUri -replace '[^\w\?/:\. ]'), 
+                    ($Room -replace '[^\w]'),
+                    $Secret,
+                    $Password
+    }
+    elseif($Scene){
+        $VDOUri = "{0}scn&room={1}_{2}&Password={3}&view={4}" -f `
+                    ($BaseUri -replace '[^\w\?/:\. ]'), 
+                    ($Room -replace '[^\w]'),
+                    $Secret,
+                    $Password,
+                    ($View -replace '[^\w]')
+    }
+    else{
         if($Pronouns){$Label = "{0} ({1})" -f $Guest, $Pronouns -replace "/","%2f"}else{$Label = $Guest}
         $VDOUri = "{0}push={1}&label={2}&room={3}_{4}&Password={5}&{6}" -f  `
                     ($BaseUri -replace '[^\w\?/:\. ]'), 
@@ -51,13 +72,6 @@ function New-VDOUri {
                     $Secret,
                     $Password,
                     ($VDOConfig -join "&" -replace '[^\w_%\s&=()]') 
-    }
-    else{
-        $VDOUri = "{0}director={1}_{2}&Password={3}" -f `
-                    ($BaseUri -replace '[^\w\?/:\. ]'), 
-                    ($Room -replace '[^\w]'),
-                    $Secret,
-                    $Password
     }
     
     
