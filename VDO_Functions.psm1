@@ -39,14 +39,14 @@ function New-VDOUri {
         [Parameter()][array]$VDOConfig,
         [Parameter()][string]$Password
     ) 
-    $VDOUri = "{0}push={1}&room={2}_{3}&Password={4}&{5}" -f    ($BaseUri -replace '[^a-zA-Z0-9\?/:\. ]'), 
-                                                                ($Guest -replace '[^a-zA-Z0-9 ]'), 
-                                                                ($Room -replace '[^a-zA-Z0-9 ]'),
+    $VDOUri = "{0}push={1}&room={2}_{3}&Password={4}&{5}" -f    ($BaseUri -replace '[^\w\?/:\. ]'), 
+                                                                ($Guest -replace '[^\w]'), 
+                                                                ($Room -replace '[^\w]'),
                                                                 $Secret,
                                                                 $Password,
-                                                                ($VDOConfig -join "&" -replace '[^a-zA-Z0-9_% ]') 
+                                                                ($VDOConfig -join "&" -replace '[^\w_%\s&=]') 
     
-    return $VDOUri -replace ' ','%20'
+    return $VDOUri -replace '[\s]','%20'
                                                             
 }
 
