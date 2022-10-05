@@ -1,0 +1,3 @@
+*.json
+!EXAMPLE_CONFIG.json
+!EXAMPLE_INPUT.json
