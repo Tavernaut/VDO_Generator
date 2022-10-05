@@ -44,9 +44,9 @@ $Password = New-VDOSecret $Config.PasswordLength
 
 $DefaultConfig = $Settings.Config.PSObject.Properties["_default"]
 
-$URIs = [PSObject]@{
+$URIs = @{
     DirectorUri = New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Secret $Secret -Password $Password -Director
-    Guests      = [PSObject]@{}
+    Guests      = @{}
 }
 
 foreach($Guest in $Settings.Guests){
@@ -60,8 +60,8 @@ foreach($Guest in $Settings.Guests){
         $VDOConfig = Format-VDOConfig -DefaultParameters $DefaultConfig.Value.ConfigList
     }
     
-    $URIs.Guests += [PSObject]@{
-        $Guest = [PSObject]@{
+    $URIs.Guests += @{
+        $Guest = @{
             Link    = New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -VDOConfig $VDOConfig -Password $Password -Pronouns $GuestConfig.Value.Pronouns
             Scene   = New-VDOUri -Scene -BaseUri $config.BaseUri -Room $Settings.RoomName -View $Guest -Secret $Secret -Password $Password    
         }
@@ -69,5 +69,80 @@ foreach($Guest in $Settings.Guests){
 }
 
 if($ExecuteOBSCommands){
+    if($config.OBSCommand.Password){$Password = $config.OBSCommand.Password | ConvertTo-SecureString -AsPlainText -Force}
+    else{$Password = Read-Host -AsSecureString -Prompt "OBS Websocket Password"}
+    Test-OBSCommand -OBSCommandLocation $config.OBSCommand.Location `
+                    -TimeOut $config.OBSCommand.TimeOut `
+                    -Server $config.OBSCommand.Server `
+                    -Port $config.OBSCommand.Port `
+                    -OBSPassword $Password
     
+    $CurrentScene = (Invoke-OBSCommand  -OBSCommandLocation $config.OBSCommand.Location `
+                                        -TimeOut $config.OBSCommand.TimeOut `
+                                        -Server $config.OBSCommand.Server `
+                                        -Port $config.OBSCommand.Port `
+                                        -OBSPassword $Password `
+                                        -Command "GetSceneList").currentProgramSceneName
+    
+    $CreateInput = [psobject]@{
+        sceneName       = $CurrentScene
+        inputName       = "test"
+        inputKind       = "browser_source"
+        inputSettings   = @{
+            height  = 1080
+            width   = 1920
+        }
+    }
+    foreach($Guest in $URIs.Guests.GetEnumerator()){
+        $CreateInput = [psobject]@{
+            sceneName       = $CurrentScene
+            inputName       = $Guest.Name
+            inputKind       = "browser_source"
+            inputSettings   = @{
+                height          = 1080
+                width           = 1920
+                url             = $Guest.Value.Scene
+                reroute_audio   = $true
+                shutdown        = $true
+            }
+        }
+
+        Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
+                            -TimeOut $config.OBSCommand.TimeOut `
+                            -Server $config.OBSCommand.Server `
+                            -Port $config.OBSCommand.Port `
+                            -OBSPassword $Password `
+                            -Command "CreateInput" `
+                            -JSONPayload $CreateInput | Out-Null
+
+        $SetInputAudioTracks = [psobject]@{
+            inputName        = $Guest.Name
+            inputAudioTracks = [psobject]@{
+                "1"= $true
+                "2"= $true
+                "3"= $true
+                "4"= $false
+                "5"= $false
+                "6"= $false
+            }
+        }                   
+        Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
+                            -TimeOut $config.OBSCommand.TimeOut `
+                            -Server $config.OBSCommand.Server `
+                            -Port $config.OBSCommand.Port `
+                            -OBSPassword $Password `
+                            -Command "SetInputAudioTracks" `
+                            -JSONPayload $SetInputAudioTracks | Out-Null
+
+        
+    }
+
+    # Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
+    #                     -TimeOut $config.OBSCommand.TimeOut `
+    #                     -Server $config.OBSCommand.Server `
+    #                     -Port $config.OBSCommand.Port `
+    #                     -OBSPassword $Password `
+    #                     -Command "CreateInput" `
+    #                     -JSONPayload $CreateInput | Out-Null
+
 }

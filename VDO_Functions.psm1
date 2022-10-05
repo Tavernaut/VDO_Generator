@@ -129,8 +129,8 @@ function Test-OBSCommand {
         
         $RunTime= 0
         while(($TestJob.State -eq "Running") -and ($RunTime -lt $Timeout)){
-            Start-Sleep 5
-            $RunTime += 5
+            Start-Sleep 1
+            $RunTime += 1
         }
         if($TestJob.State -eq "Running"){
             Stop-Job $TestJob
@@ -143,7 +143,7 @@ function Test-OBSCommand {
                 break
             }
             else{
-                return $true
+                return "OBS Websocket Connection Confirmed"
             }
         }
         
@@ -153,4 +153,48 @@ function Test-OBSCommand {
         Write-Error "Did you install it? You can find it over at: https://github.com/REALDRAGNET/OBSCommand"
         break
     }
+}
+
+function Invoke-OBSCommand {
+    param(
+        [Parameter(Mandatory)][string]$OBSCommandLocation,
+        [Parameter(Mandatory)][securestring]$OBSPassword,
+        [Parameter()][string]$Server="127.0.0.1",
+        [Parameter()][int]$Port=4455,
+        [Parameter()][int]$TimeOut=30,
+        [Parameter(Mandatory)][string]$Command,
+        [Parameter()][psobject]$JSONPayload
+    )
+
+    if(!$JSONPayload){
+        $ScriptBlock = "{0} /server={1}:{2} /password={3} /command={4}" -f `
+                $OBSCommandLocation,
+                $Server,
+                $Port,
+                ($OBSPassword | ConvertFrom-SecureString -AsPlainText),
+                $Command
+    }
+    else{
+        $ScriptBlock = "{0} /server={1}:{2} /password={3} /sendjson=`"{4}={5}`"" -f`
+            $OBSCommandLocation,
+            $Server,
+            $Port,
+            ($OBSPassword | ConvertFrom-SecureString -AsPlainText),
+            $Command,
+            ($JSONPayload | ConvertTo-Json -Compress).Replace('"',"'")
+
+    }
+
+    $Job = Start-Job -Scriptblock ([scriptblock]::Create($ScriptBlock))
+    $RunTime= 0
+    while(($Job.State -eq "Running") -and ($RunTime -lt $Timeout)){
+        Start-Sleep 1
+        $RunTime += 1
+    }
+    if($TestJob.State -eq "Running"){
+        Stop-Job $TestJob
+        Write-Error "Timed out while connecting to OBS Websocket, check if the password is correct."
+        break
+    }
+    return ($Job | Receive-Job).Trim("Ok") | ConvertFrom-Json 
 }
