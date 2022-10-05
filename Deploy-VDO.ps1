@@ -68,4 +68,6 @@ foreach($Guest in $Settings.Guests){
     }    
 }
 
-$URIs | ConvertTo-Json
+if($ExecuteOBSCommands){
+    
+}

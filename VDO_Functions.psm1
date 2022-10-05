@@ -109,3 +109,48 @@ function Format-VDOConfig {
 
     return $output
 }
+
+function Test-OBSCommand {
+    param(
+        [Parameter(Mandatory)][string]$OBSCommandLocation,
+        [Parameter(Mandatory)][securestring]$OBSPassword,
+        [Parameter()][string]$Server="127.0.0.1",
+        [Parameter()][int]$Port=4455,
+        [Parameter()][int]$TimeOut=30
+    )
+
+    if(Test-Path $OBSCommandLocation){
+        $ScriptBlock = "{0} /server={1}:{2} /password={3} /command=GetVersion" -f`
+                            $OBSCommandLocation,
+                            $Server,
+                            $Port,
+                            ($OBSPassword | ConvertFrom-SecureString -AsPlainText)
+        $TestJob = Start-Job -Scriptblock ([scriptblock]::Create($ScriptBlock))
+        
+        $RunTime= 0
+        while(($TestJob.State -eq "Running") -and ($RunTime -lt $Timeout)){
+            Start-Sleep 5
+            $RunTime += 5
+        }
+        if($TestJob.State -eq "Running"){
+            Stop-Job $TestJob
+            Write-Error "Timed out while connecting to OBS Websocket, check if the password is correct."
+            break
+        }
+        else{
+            if(($TestJob | Receive-Job) -eq "Error: can't connect to OBS websocket plugin!"){
+                Write-Error "Error while connecting to OBS Websocket, is the server running and are the -Address and -Port variables set correctly?"
+                break
+            }
+            else{
+                return $true
+            }
+        }
+        
+    }
+    else{
+        Write-Error "OBSCommand was called but is not installed at location $OBSCommandLocation"
+        Write-Error "Did you install it? You can find it over at: https://github.com/REALDRAGNET/OBSCommand"
+        break
+    }
+}
