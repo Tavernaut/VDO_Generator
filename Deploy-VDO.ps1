@@ -33,16 +33,15 @@ else{
 }
 
 $Secret = New-VDOSecret ($Config.RoomNameLength - [int]$Settings.RoomName.Length - 1)
-
+$Password = New-VDOSecret $Config.PasswordLength
 
 
 foreach($Guest in $Settings.Guests){
     if($Settings.Config.PSObject.Properties.Name -Contains $Guest){
-        $VDOConfig =  $Settings.Config.PSObject.Properties["$Guest"].Value.ConfigList -join "&"
+        $ConfigList =  $Settings.Config.PSObject.Properties["$Guest"].Value.ConfigList
     }
     else{
-        $VDOConfig =  $Settings.Config.PSObject.Properties["_default"].Value.ConfigList -join "&"
+        $ConfigList = $Settings.Config.PSObject.Properties["_default"].Value.ConfigList
     }
-    
-    New-VDOUri -VDOConfig $VDOConfig  -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret 
+    New-VDOUri -BaseUri $config.BaseUri -Room $Settings.RoomName -Guest $Guest -Secret $Secret -ConfigList $ConfigList -Password $Password 
 }
