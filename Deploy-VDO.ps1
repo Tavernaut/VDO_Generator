@@ -114,18 +114,17 @@ if($ExecuteOBSCommands){
                             -OBSPassword $Password `
                             -Command "CreateInput" `
                             -JSONPayload $CreateInput | Out-Null
-
-        $SetInputAudioTracks = [psobject]@{
-            inputName        = $Guest.Name
-            inputAudioTracks = [psobject]@{
-                "1"= $true
-                "2"= $true
-                "3"= $true
-                "4"= $false
-                "5"= $false
-                "6"= $false
-            }
-        }                   
+                            $SetInputAudioTracks = [psobject]@{
+                                inputName        = $Guest.Name
+                                inputAudioTracks = [psobject]@{
+                                    "1"= $true
+                                    "2"= $true
+                                    "3"= $true
+                                    "4"= $false
+                                    "5"= $false
+                                    "6"= $false
+                                }
+                            }                   
         Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
                             -TimeOut $config.OBSCommand.TimeOut `
                             -Server $config.OBSCommand.Server `
@@ -134,15 +133,6 @@ if($ExecuteOBSCommands){
                             -Command "SetInputAudioTracks" `
                             -JSONPayload $SetInputAudioTracks | Out-Null
 
-        
     }
-
-    # Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
-    #                     -TimeOut $config.OBSCommand.TimeOut `
-    #                     -Server $config.OBSCommand.Server `
-    #                     -Port $config.OBSCommand.Port `
-    #                     -OBSPassword $Password `
-    #                     -Command "CreateInput" `
-    #                     -JSONPayload $CreateInput | Out-Null
 
 }

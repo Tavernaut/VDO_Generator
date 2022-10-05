@@ -1,3 +1,4 @@
 {
-    "foo": "bar"
+    "BaseUri": "https://vdo.ninja/?",
+    "RoomNameLength": 30
 }
