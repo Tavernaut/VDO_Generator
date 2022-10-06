@@ -166,35 +166,54 @@ function Invoke-OBSCommand {
         [Parameter()][psobject]$JSONPayload
     )
 
-    if(!$JSONPayload){
-        $ScriptBlock = "{0} /server={1}:{2} /password={3} /command={4}" -f `
+    if(Test-Path $OBSCommandLocation){
+        if(!$JSONPayload){
+            $ScriptBlock = "{0} /server={1}:{2} /password={3} /command={4}" -f `
+                    $OBSCommandLocation,
+                    $Server,
+                    $Port,
+                    ($OBSPassword | ConvertFrom-SecureString -AsPlainText),
+                    $Command
+        }
+        else{
+            $ScriptBlock = "{0} /server={1}:{2} /password={3} /sendjson=`"{4}={5}`"" -f`
                 $OBSCommandLocation,
                 $Server,
                 $Port,
                 ($OBSPassword | ConvertFrom-SecureString -AsPlainText),
-                $Command
+                $Command,
+                ($JSONPayload | ConvertTo-Json -Compress).Replace('"',"'")
+    
+        }
+        Write-Verbose -Message "Running: $ScriptBlock"
+        $Job = Start-Job -Scriptblock ([scriptblock]::Create($ScriptBlock))
+        $RunTime = 0
+        while(($Job.State -eq "Running") -and ($RunTime -lt $Timeout)){
+            Start-Sleep 1
+            $RunTime += 1
+        }
+
+        if($Job.State -eq "Running"){
+            Stop-Job $Job
+            Write-Error "Timed out while connecting to OBS Websocket, check if the password is correct."
+            break
+        }
+        
+        else{
+            $Result = $Job | Receive-Job
+            if($Result -like "Error:*"){
+                Write-Error "$Result"
+                break
+            }
+            else{
+                return $Result.Trim("Ok") | ConvertFrom-Json 
+            }
+        }
+        
     }
     else{
-        $ScriptBlock = "{0} /server={1}:{2} /password={3} /sendjson=`"{4}={5}`"" -f`
-            $OBSCommandLocation,
-            $Server,
-            $Port,
-            ($OBSPassword | ConvertFrom-SecureString -AsPlainText),
-            $Command,
-            ($JSONPayload | ConvertTo-Json -Compress).Replace('"',"'")
-
-    }
-
-    $Job = Start-Job -Scriptblock ([scriptblock]::Create($ScriptBlock))
-    $RunTime= 0
-    while(($Job.State -eq "Running") -and ($RunTime -lt $Timeout)){
-        Start-Sleep 1
-        $RunTime += 1
-    }
-    if($TestJob.State -eq "Running"){
-        Stop-Job $TestJob
-        Write-Error "Timed out while connecting to OBS Websocket, check if the password is correct."
+        Write-Error "OBSCommand was called but is not installed at location $OBSCommandLocation"
+        Write-Error "Did you install it? You can find it over at: https://github.com/REALDRAGNET/OBSCommand"
         break
     }
-    return ($Job | Receive-Job).Trim("Ok") | ConvertFrom-Json 
 }

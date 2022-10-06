@@ -68,14 +68,11 @@ foreach($Guest in $Settings.Guests){
     }    
 }
 
+$URIs | ConvertTo-Json
+
 if($ExecuteOBSCommands){
     if($config.OBSCommand.Password){$Password = $config.OBSCommand.Password | ConvertTo-SecureString -AsPlainText -Force}
     else{$Password = Read-Host -AsSecureString -Prompt "OBS Websocket Password"}
-    Test-OBSCommand -OBSCommandLocation $config.OBSCommand.Location `
-                    -TimeOut $config.OBSCommand.TimeOut `
-                    -Server $config.OBSCommand.Server `
-                    -Port $config.OBSCommand.Port `
-                    -OBSPassword $Password
     
     $CurrentScene = (Invoke-OBSCommand  -OBSCommandLocation $config.OBSCommand.Location `
                                         -TimeOut $config.OBSCommand.TimeOut `
@@ -84,15 +81,7 @@ if($ExecuteOBSCommands){
                                         -OBSPassword $Password `
                                         -Command "GetSceneList").currentProgramSceneName
     
-    $CreateInput = [psobject]@{
-        sceneName       = $CurrentScene
-        inputName       = "test"
-        inputKind       = "browser_source"
-        inputSettings   = @{
-            height  = 1080
-            width   = 1920
-        }
-    }
+
     foreach($Guest in $URIs.Guests.GetEnumerator()){
         $CreateInput = [psobject]@{
             sceneName       = $CurrentScene
@@ -114,17 +103,20 @@ if($ExecuteOBSCommands){
                             -OBSPassword $Password `
                             -Command "CreateInput" `
                             -JSONPayload $CreateInput | Out-Null
+
+
                             $SetInputAudioTracks = [psobject]@{
-                                inputName        = $Guest.Name
-                                inputAudioTracks = [psobject]@{
-                                    "1"= $true
-                                    "2"= $true
-                                    "3"= $true
-                                    "4"= $false
-                                    "5"= $false
-                                    "6"= $false
-                                }
-                            }                   
+            inputName        = $Guest.Name
+            inputAudioTracks = [psobject]@{
+                "1"= $true
+                "2"= $true
+                "3"= $false
+                "4"= $false
+                "5"= $false
+                "6"= $false
+            }
+        }        
+                   
         Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
                             -TimeOut $config.OBSCommand.TimeOut `
                             -Server $config.OBSCommand.Server `
@@ -136,3 +128,4 @@ if($ExecuteOBSCommands){
     }
 
 }
+
