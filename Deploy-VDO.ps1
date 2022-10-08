@@ -105,17 +105,17 @@ if($ExecuteOBSCommands){
                             -JSONPayload $CreateInput | Out-Null
 
 
-                            $SetInputAudioTracks = [psobject]@{
+        $SetInputAudioTracks = [psobject]@{
             inputName        = $Guest.Name
             inputAudioTracks = [psobject]@{
-                "1"= $true
-                "2"= $true
-                "3"= $false
-                "4"= $false
-                "5"= $false
-                "6"= $false
             }
-        }        
+        }    
+        foreach($track in 1..6){
+            $SetInputAudioTracks.inputAudioTracks += @{
+                "$track"= (($track -in $settings.DedicatedAudiotracks) -or ($track -eq $settings.Config.($Guest.Name).AudioTrack)) 
+            }
+            $SetInputAudioTracks.inputAudioTracks
+        }    
                    
         Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
                             -TimeOut $config.OBSCommand.TimeOut `
