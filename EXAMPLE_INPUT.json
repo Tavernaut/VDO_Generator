@@ -1,12 +1,24 @@
 {
-    "RoomName": "testroom",
-    "Guests": ["Tavernaut","GuestA","GuestB"],
+    "RoomName": "example-room",
+    "Guests": [
+        "guest 1",
+        "guest 2",
+        "guest 3"
+    ],
+    "DedicatedAudioTracks": [1,2],
     "Config": {
         "_default": {
-
+            "ConfigList": "@{showlabels=}"
         },
-        "Tavernaut": {
-
+        "guest 1": {
+            "AudioTrack": 3,
+            "Pronouns": "pro/nouns"
+        },
+        "guest 2": {
+            "AudioTrack": 4
+        },
+        "guest 3": {
+            "AudioTrack": 5
         }
     }
 }
