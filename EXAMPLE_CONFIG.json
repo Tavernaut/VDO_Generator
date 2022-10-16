@@ -1,4 +1,12 @@
 {
     "BaseUri": "https://vdo.ninja/?",
-    "RoomNameLength": 30
+    "RoomNameLength": 30,
+    "PasswordLength": 10,
+    "OBSCommand": {
+        "Location": "path to your obscommand.exe",
+        "Password": "your obs websocket password",
+        "Timeout": 30,
+        "Server": "localhost:",
+        "Port": 4455
+    }
 }
