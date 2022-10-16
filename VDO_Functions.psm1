@@ -30,6 +30,57 @@ function Read-VDOConfig {
     }
 }
 
+function Format-VDOConfig {
+    param(
+        [Parameter(Mandatory)][psobject]$DefaultParameters,
+        [Parameter()][psobject]$OverrideParameters
+    )
+
+    $Parameters = $DefaultParameters.PSObject.Copy()
+
+    if($OverrideParameters){
+        foreach($Param in $OverrideParameters.PSObject.Properties){
+            $Parameters | Add-Member -MemberType NoteProperty -Name $Param.Name -Value $Param.Value -Force  
+        }
+        
+    }
+    
+    $output = @()
+
+
+    foreach($Param in $Parameters.PSObject.Properties){
+        if($Param.Value){$output += $Param.Name, $Param.Value -join "="}
+        else {$output += $Param.Name}
+    }
+
+    return $output
+}
+
+function Write-VDOConfig { 
+    param(
+        [Parameter(Mandatory = $true, Position = 0)][String]$ConfigFile,
+        [Parameter(Mandatory = $true)][PSObject]$VDOConfig,
+        [Parameter()][Switch]$Force = $false
+    )
+    try {
+        if(!(Test-Path $ConfigFile)){
+            Write-Error "Config file doesn't exist in: $ConfigFile"
+            break
+        }
+        $BaseConfig = Get-Content $ConfigFile | ConvertFrom-JSON
+        if($force){
+            $BaseConfig | Add-Member  -NotePropertyName "VDOConfig" -NotePropertyValue $VDOConfig -Force
+        }
+        else{
+            $BaseConfig | Add-Member  -NotePropertyName "VDOConfig" -NotePropertyValue $VDOConfig 
+        }
+        $BaseConfig | ConvertTo-Json -Depth 5 | Out-File $ConfigFile -Force
+    }
+    catch {
+        {1:Write-Error "An error occurred that caused the script to terminate."}
+    }
+}
+
 function New-VDOUri {
     param(
         [Parameter(Mandatory)][string]$BaseUri,
@@ -85,31 +136,6 @@ function New-VDOSecret {
     )
     -join ((0..9) + (65 .. 90) + (97 ..122 ) | Get-Random -Count $Length | %{if($_ -lt 10){$_}else{[char]$_}})
 }
-
-function Format-VDOConfig {
-    param(
-        [Parameter(Mandatory)][psobject]$DefaultParameters,
-        [Parameter()][psobject]$OverrideParameters
-    )
-
-    $Parameters = $DefaultParameters.PSObject.Copy()
-
-    if($OverrideParameters){
-        foreach($Param in $OverrideParameters.PSObject.Properties){
-            $Parameters | Add-Member -MemberType NoteProperty -Name $Param.Name -Value $Param.Value -Force
-        }
-    }
-
-    $output = @()
-    
-    foreach($Param in $Parameters.PSObject.Properties){
-        if($Param.Value){$output += $Param.Name, $Param.Value -join "="}
-        else {$output += $Param.Name}
-    }
-
-    return $output
-}
-
 
 function Invoke-OBSCommand {
     param(

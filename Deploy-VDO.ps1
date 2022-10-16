@@ -50,10 +50,12 @@ $URIs = @{
 }
 
 foreach($Guest in $Settings.Guests){
-    $VDOConfigs = $DefaultConfig
+    $VDOConfig = $DefaultConfig
     if($Settings.Config.PSObject.Properties.Name -Contains $Guest){        
         $GuestConfig =  $Settings.Config.PSObject.Properties["$Guest"]
+
         $VDOConfig = Format-VDOConfig -DefaultParameters $DefaultConfig.Value.ConfigList -OverrideParameters $GuestConfig.Value.ConfigList
+        # Write-Verbose "$VDOConfig"
     }
     else{
         $GuestConfig = $DefaultConfig
@@ -67,8 +69,6 @@ foreach($Guest in $Settings.Guests){
         }
     }    
 }
-
-$URIs | ConvertTo-Json
 
 if($ExecuteOBSCommands){
     if($config.OBSCommand.Password){$Password = $config.OBSCommand.Password | ConvertTo-SecureString -AsPlainText -Force}
@@ -85,7 +85,7 @@ if($ExecuteOBSCommands){
     foreach($Guest in $URIs.Guests.GetEnumerator()){
         $CreateInput = [psobject]@{
             sceneName       = $CurrentScene
-            inputName       = $Guest.Name
+            inputName       = "$($Guest.Name)-$Currentscene"
             inputKind       = "browser_source"
             inputSettings   = @{
                 height          = 1080
@@ -106,7 +106,7 @@ if($ExecuteOBSCommands){
 
 
         $SetInputAudioTracks = [psobject]@{
-            inputName        = $Guest.Name
+            inputName        = "$($Guest.Name)-$Currentscene"
             inputAudioTracks = [psobject]@{
             }
         }    
@@ -114,7 +114,6 @@ if($ExecuteOBSCommands){
             $SetInputAudioTracks.inputAudioTracks += @{
                 "$track"= (($track -in $settings.DedicatedAudiotracks) -or ($track -eq $settings.Config.($Guest.Name).AudioTrack)) 
             }
-            $SetInputAudioTracks.inputAudioTracks
         }    
                    
         Invoke-OBSCommand   -OBSCommandLocation $config.OBSCommand.Location `
@@ -129,3 +128,4 @@ if($ExecuteOBSCommands){
 
 }
 
+$Settings = Write-VDOConfig "$PSScriptRoot\$JSONFile" -VDOConfig $URIs -Force
